@@ -241,12 +241,6 @@ This project is intentionally production-aligned — not a local toy:
 
 ## 🗺️ Roadmap
 
-- [x] Header-aware markdown chunker with paragraph overlap
-- [x] ChromaDB vector store with local `all-MiniLM-L6-v2` embeddings
-- [x] Claude-powered grounded answer generation with source citations
-- [x] Web UI with example queries and debug panel (retrieved chunks + relevance scores)
-- [x] `ingest.py` CLI with `--reset` flag for full re-indexing
-- [x] systemd service, Nginx reverse proxy, Cloudflare deployment
 - [ ] Incident-runbook integration — auto-retrieve relevant procedure on alert and include in Telegram notification
 - [ ] Runbook upload via UI — drag-and-drop ingest without SSH access
 - [ ] Multi-turn conversation — follow-up questions with session context

@@ -83,7 +83,26 @@
       font-size: 0.72rem;
       color: var(--muted);
       font-family: var(--mono);
+      position: relative;
+      cursor: default;
     }
+
+    .doc-count .tooltip {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 0.4rem 0.65rem;
+      font-size: 0.68rem;
+      color: var(--muted2);
+      white-space: nowrap;
+      z-index: 20;
+    }
+
+    .doc-count:hover .tooltip { display: block; }
 
     .live-dot {
       display: flex;
@@ -402,7 +421,9 @@
     <h1>Runbook <span>Assistant</span></h1>
   </div>
   <div class="header-right">
-    <span class="doc-count" id="doc-count">{{ doc_count }} runbooks indexed</span>
+    <span class="doc-count" id="doc-count">{{ doc_count }} runbooks indexed
+      <span class="tooltip">up to 4 excerpts retrieved per query</span>
+    </span>
     <span class="live-dot">Online</span>
   </div>
 </header>

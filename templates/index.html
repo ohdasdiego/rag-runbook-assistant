@@ -1,57 +1,544 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG Runbook Assistant</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Runbook Assistant</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #111111;
+      --panel:       #181818;
+      --card:        #1f1f1f;
+      --border:      #2a2a2a;
+      --border2:     #333333;
+      --orange:      #ff6b00;
+      --orange2:     #ff8c00;
+      --orange-dim:  rgba(255,107,0,0.12);
+      --orange-glow: rgba(255,107,0,0.25);
+      --green:       #73bf69;
+      --text:        #d9d9d9;
+      --muted:       #686868;
+      --muted2:      #888888;
+      --font:        'Inter', 'Segoe UI', system-ui, sans-serif;
+      --mono:        'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-size: 13px;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: var(--orange);
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+      box-shadow: 0 0 10px var(--orange-glow);
+    }
+
+    .logo h1 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
+    .logo h1 span { color: var(--orange); }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .doc-count {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .live-dot {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.68rem;
+      color: var(--muted2);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .live-dot::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 6px var(--orange);
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── Layout ──────────────────────────────────────────── */
+    main {
+      flex: 1;
+      padding: 1.25rem 1.5rem;
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Query Panel ─────────────────────────────────────── */
+    .query-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .query-box {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+
+    textarea {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.88rem;
+      resize: vertical;
+      outline: none;
+      padding: 0.65rem 0.85rem;
+      min-height: 64px;
+      line-height: 1.5;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus { border-color: var(--orange); }
+    textarea::placeholder { color: var(--muted); }
+
+    button#ask-btn {
+      background: var(--orange);
+      color: #000;
+      border: none;
+      padding: 0 1.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      align-self: flex-start;
+      min-width: 80px;
+      height: 40px;
+    }
+
+    button#ask-btn:hover { background: var(--orange2); box-shadow: 0 0 10px var(--orange-glow); }
+    button#ask-btn:disabled { background: var(--border2); color: var(--muted); cursor: not-allowed; box-shadow: none; }
+
+    .btn-spinner { display: inline-block; animation: spin 1s linear infinite; }
+    @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .example-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-family: var(--mono);
+      margin-right: 0.2rem;
+    }
+
+    .example-chip {
+      background: var(--card);
+      color: var(--muted2);
+      border: 1px solid var(--border2);
+      padding: 0.3rem 0.7rem;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font);
+    }
+
+    .example-chip:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: var(--orange-dim);
+    }
+
+    /* ── Result Panel ────────────────────────────────────── */
+    .result-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--orange);
+      border-radius: 4px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .rag-tag {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      background: var(--orange-dim);
+      border: 1px solid rgba(255,107,0,0.2);
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+      font-family: var(--mono);
+    }
+
+    .answer {
+      font-size: 0.85rem;
+      color: var(--text);
+      line-height: 1.75;
+      white-space: pre-wrap;
+      margin-bottom: 1rem;
+    }
+
+    .answer code {
+      background: var(--card);
+      color: var(--orange2);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 0.82em;
+    }
+
+    .answer pre {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 0.85rem 1rem;
+      overflow-x: auto;
+      margin: 0.65rem 0;
+    }
+
+    .answer pre code {
+      background: transparent;
+      padding: 0;
+      color: var(--text);
+    }
+
+    .answer strong { color: #f0f0f0; }
+
+    /* ── Sources ─────────────────────────────────────────── */
+    .sources-section {
+      border-top: 1px solid var(--border);
+      padding-top: 0.85rem;
+    }
+
+    .sources-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+      font-family: var(--mono);
+    }
+
+    .source-chip {
+      display: inline-block;
+      background: var(--orange-dim);
+      color: var(--orange);
+      border: 1px solid rgba(255,107,0,0.2);
+      padding: 0.2rem 0.6rem;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      margin-right: 0.4rem;
+      margin-bottom: 0.3rem;
+      font-family: var(--mono);
+    }
+
+    .debug-toggle {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.72rem;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      padding: 0;
+      font-family: var(--mono);
+      text-decoration: underline;
+      display: block;
+    }
+
+    .debug-toggle:hover { color: var(--muted2); }
+
+    .debug-panel {
+      margin-top: 0.65rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.75rem;
+      display: none;
+    }
+
+    .chunk-preview {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chunk-preview:last-child { border-bottom: none; }
+
+    .chunk-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted2);
+    }
+
+    .score { color: var(--orange); }
+
+    .chunk-text {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── Error ───────────────────────────────────────────── */
+    .error-panel {
+      background: rgba(242,73,92,0.06);
+      border: 1px solid rgba(242,73,92,0.2);
+      border-radius: 4px;
+      padding: 0.85rem 1rem;
+      color: #f2495c;
+      font-size: 0.82rem;
+      font-family: var(--mono);
+    }
+
+    /* ── Footer ──────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 0.75rem;
+      font-size: 0.68rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+    }
+
+    footer a { color: var(--orange); text-decoration: none; opacity: 0.8; }
+    footer a:hover { opacity: 1; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">
-                <span class="logo-icon">⚡</span>
-                <h1>Runbook Assistant</h1>
-            </div>
-            <div class="stats">
-                <span class="stat-badge"><span id="doc-count">{{ doc_count }}</span> runbooks indexed</span>
-                <span class="stat-badge status-badge">● Online</span>
-            </div>
-        </header>
 
-        <main>
-            <div class="intro">
-                <h2>Ask anything about your runbooks</h2>
-                <p>Retrieval-augmented generation powered by ChromaDB and Claude. All answers cite their source.</p>
-            </div>
+<header>
+  <div class="logo">
+    <div class="logo-icon">📖</div>
+    <h1>Runbook <span>Assistant</span></h1>
+  </div>
+  <div class="header-right">
+    <span class="doc-count" id="doc-count">{{ doc_count }} runbooks indexed</span>
+    <span class="live-dot">Online</span>
+  </div>
+</header>
 
-            <div class="query-box">
-                <textarea
-                    id="question"
-                    placeholder="e.g. How do I restart the ingestion pipeline if it's stuck?"
-                    rows="3"
-                ></textarea>
-                <button id="ask-btn" onclick="askQuestion()">
-                    <span class="btn-text">Ask</span>
-                    <span class="btn-spinner" style="display:none;">⟳</span>
-                </button>
-            </div>
+<main>
 
-            <div class="examples">
-                <span class="example-label">Try:</span>
-                <button class="example-chip" onclick="setQuestion(this)">How do I respond to a high CPU alert?</button>
-                <button class="example-chip" onclick="setQuestion(this)">What's the escalation path for a P1 incident?</button>
-                <button class="example-chip" onclick="setQuestion(this)">How do I rotate a leaked API key?</button>
-            </div>
-
-            <div id="result" class="result-area" style="display:none;"></div>
-        </main>
-
-        <footer>
-            <p>Built with ChromaDB · sentence-transformers · Claude API</p>
-        </footer>
+  <div class="section-label">Ask a Question</div>
+  <div class="query-panel">
+    <div class="query-box">
+      <textarea id="question" placeholder="e.g. How do I restart the ingestion pipeline if it's stuck?" rows="3"></textarea>
+      <button id="ask-btn" onclick="askQuestion()">
+        <span class="btn-text">Ask</span>
+        <span class="btn-spinner" style="display:none;">⟳</span>
+      </button>
     </div>
+    <div class="examples">
+      <span class="example-label">Try</span>
+      <button class="example-chip" onclick="setQuestion(this)">How do I respond to a high CPU alert?</button>
+      <button class="example-chip" onclick="setQuestion(this)">What's the escalation path for a P1 incident?</button>
+      <button class="example-chip" onclick="setQuestion(this)">How do I rotate a leaked API key?</button>
+      <button class="example-chip" onclick="setQuestion(this)">My Kubernetes pod is in CrashLoopBackOff — what do I check?</button>
+    </div>
+  </div>
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <div class="section-label" id="result-label" style="display:none;">RAG Analysis</div>
+  <div class="result-panel" id="result-panel">
+    <div class="result-header">
+      <span class="rag-tag">Runbook Answer</span>
+      <span id="chunks-used" style="font-size:0.72rem;color:var(--muted);font-family:var(--mono);"></span>
+    </div>
+    <div class="answer" id="answer"></div>
+    <div class="sources-section" id="sources-section" style="display:none;">
+      <div class="sources-label">Sources</div>
+      <div id="sources"></div>
+      <button class="debug-toggle" id="debug-toggle" onclick="toggleDebug()">Show retrieved chunks</button>
+      <div class="debug-panel" id="debug-panel"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <a href="https://github.com/ohdasdiego" target="_blank">ohdasdiego</a> ·
+  <a href="https://github.com/ohdasdiego/rag-runbook-assistant" target="_blank">GitHub</a> ·
+  ChromaDB · sentence-transformers · Claude API
+</footer>
+
+<script>
+function setQuestion(el) {
+  document.getElementById("question").value = el.textContent;
+  document.getElementById("question").focus();
+}
+
+function formatAnswer(text) {
+  text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, "<pre><code>$2</code></pre>");
+  text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+  text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  return text;
+}
+
+async function askQuestion() {
+  const question = document.getElementById("question").value.trim();
+  if (!question) return;
+
+  const btn      = document.getElementById("ask-btn");
+  const btnText  = btn.querySelector(".btn-text");
+  const spinner  = btn.querySelector(".btn-spinner");
+  const panel    = document.getElementById("result-panel");
+  const label    = document.getElementById("result-label");
+
+  btn.disabled = true;
+  btnText.style.display = "none";
+  spinner.style.display = "inline-block";
+
+  panel.style.display = "block";
+  label.style.display = "flex";
+  document.getElementById("answer").innerHTML = '<span style="color:var(--muted);font-family:var(--mono);">Searching runbooks and generating answer…</span>';
+  document.getElementById("sources-section").style.display = "none";
+
+  try {
+    const res  = await fetch("/api/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      document.getElementById("answer").innerHTML = `<div class="error-panel">${data.error}</div>`;
+      return;
+    }
+
+    document.getElementById("answer").innerHTML = formatAnswer(data.answer);
+    document.getElementById("chunks-used").textContent = `${data.chunks_used} chunks retrieved`;
+
+    if (data.sources && data.sources.length) {
+      const sourcesEl = document.getElementById("sources");
+      sourcesEl.innerHTML = data.sources.map(s => `<span class="source-chip">${s}</span>`).join("");
+
+      const debugPanel = document.getElementById("debug-panel");
+      debugPanel.innerHTML = data.retrieved_chunks.map(c => `
+        <div class="chunk-preview">
+          <div class="chunk-header">
+            <span>${c.source}</span>
+            <span class="score">score: ${c.score.toFixed(3)}</span>
+          </div>
+          <div class="chunk-text">${c.preview.replace(/</g, "&lt;")}…</div>
+        </div>
+      `).join("");
+
+      document.getElementById("debug-toggle").textContent = `Show retrieved chunks (${data.chunks_used})`;
+      document.getElementById("sources-section").style.display = "block";
+    }
+  } catch (err) {
+    document.getElementById("answer").innerHTML = `<div class="error-panel">Network error: ${err.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btnText.style.display = "inline";
+    spinner.style.display = "none";
+  }
+}
+
+function toggleDebug() {
+  const panel  = document.getElementById("debug-panel");
+  const toggle = document.getElementById("debug-toggle");
+  const open   = panel.style.display === "none" || panel.style.display === "";
+  panel.style.display = open ? "block" : "none";
+  toggle.textContent  = open
+    ? toggle.textContent.replace("Show", "Hide")
+    : toggle.textContent.replace("Hide", "Show");
+}
+
+document.getElementById("question").addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") askQuestion();
+});
+</script>
 </body>
 </html>

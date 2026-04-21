@@ -1,0 +1,18 @@
+[Unit]
+Description=RAG Runbook Assistant
+After=network.target
+
+[Service]
+User=claw
+WorkingDirectory=/home/claw/Projects/rag-runbook-assistant
+EnvironmentFile=/home/claw/Projects/rag-runbook-assistant/.env
+ExecStart=/home/claw/Projects/rag-runbook-assistant/venv/bin/gunicorn \
+    --workers 2 \
+    --bind 127.0.0.1:5002 \
+    --timeout 120 \
+    app:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

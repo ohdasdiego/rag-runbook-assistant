@@ -8,7 +8,7 @@ An AI-powered IT operations assistant that answers engineering questions from a 
 
 ## Live Demo
 
- **[runbooks.ado-runner.com](https://runbooks.ado-runner.com)**
+🔗 **[runbooks.ado-runner.com](https://runbooks.ado-runner.com)**
 
 ---
 
@@ -31,20 +31,20 @@ Engineers on-call frequently need fast answers: *"How do I respond to a high CPU
 
 ```
 1. Immediately check which process is consuming CPU:
- `top` or `ps aux --sort=-%cpu | head -10`
+   `top` or `ps aux --sort=-%cpu | head -10`
 
 2. If a runaway process is identified, investigate before killing:
- `ls -l /proc/<PID>/exe`
+   `ls -l /proc/<PID>/exe`
 
 3. If safe to terminate:
- `kill -15 <PID>` # graceful
- `kill -9 <PID>` # force if unresponsive
+   `kill -15 <PID>`   # graceful
+   `kill -9 <PID>`    # force if unresponsive
 
 4. Check system load trend:
- `uptime` — load average should be < number of CPU cores
+   `uptime` — load average should be < number of CPU cores
 
 5. Escalate to P1 if CPU stays above 95% for more than 5 minutes
- or if the offending process cannot be identified.
+   or if the offending process cannot be identified.
 
 Sources: 01-high-cpu-alert.md, 02-incident-escalation.md
 ```
@@ -52,9 +52,9 @@ Sources: 01-high-cpu-alert.md, 02-incident-escalation.md
 ### Debug Panel (retrieved chunks)
 
 ```
-01-high-cpu-alert.md score: 0.847
-02-incident-escalation.md score: 0.721
-07-oncall-handbook.md score: 0.598
+01-high-cpu-alert.md     score: 0.847
+02-incident-escalation.md    score: 0.721
+07-oncall-handbook.md        score: 0.598
 ```
 
 ---
@@ -63,38 +63,38 @@ Sources: 01-high-cpu-alert.md, 02-incident-escalation.md
 
 ```
 Runbooks (.md)
- │
- ▼
- ingest.py (one-time)
- │
- ┌───┴──────────────┐
- │ chunker.py │ Header-aware markdown splitter
- │ (## boundaries) │ with paragraph-level overlap
- └───┬──────────────┘
- │
- ▼
- ChromaDB (persistent)
- + all-MiniLM-L6-v2 embeddings (local, CPU)
- │
- │ Query time
- │
- Web UI ──► /api/query
- │
- vector_store.py
- (cosine similarity, top-4 chunks)
- │
- rag_engine.py
- (chunks → Claude prompt)
- │
- Claude API (Haiku 4.5)
- │
- Cited answer + sources
+      │
+      ▼
+  ingest.py (one-time)
+      │
+  ┌───┴──────────────┐
+  │   chunker.py      │  Header-aware markdown splitter
+  │   (## boundaries) │  with paragraph-level overlap
+  └───┬──────────────┘
+      │
+      ▼
+  ChromaDB (persistent)
+  + all-MiniLM-L6-v2 embeddings (local, CPU)
+      │
+      │   Query time
+      │
+  Web UI ──► /api/query
+                │
+          vector_store.py
+          (cosine similarity, top-4 chunks)
+                │
+          rag_engine.py
+          (chunks → Claude prompt)
+                │
+          Claude API (Haiku 4.5)
+                │
+          Cited answer + sources
 ```
 
 ```
 Browser ──► Cloudflare (SSL/DDoS) ──► Nginx (reverse proxy) ──► Gunicorn:5002
- │
- Claude API (Anthropic)
+                                                                       │
+                                                               Claude API (Anthropic)
 ```
 
 **Key design decisions:**
@@ -239,7 +239,7 @@ This project is intentionally production-aligned — not a local toy:
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
 - [ ] Incident-runbook integration — auto-retrieve relevant procedure on alert and include in Telegram notification
 - [ ] Runbook upload via UI — drag-and-drop ingest without SSH access

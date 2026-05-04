@@ -23,7 +23,7 @@ def main():
     store = VectorStore()
 
     if args.reset:
-        print("Resetting vector store...")
+        print("🗑️  Resetting vector store...")
         store.reset()
 
     runbook_files = [
@@ -32,10 +32,10 @@ def main():
     ]
 
     if not runbook_files:
-        print(f"No markdown files found in {args.runbooks_dir}")
+        print(f"❌ No markdown files found in {args.runbooks_dir}")
         sys.exit(1)
 
-    print(f"Found {len(runbook_files)} runbooks")
+    print(f"📚 Found {len(runbook_files)} runbooks")
 
     total_chunks = 0
     for filename in sorted(runbook_files):
@@ -46,9 +46,9 @@ def main():
         chunks = chunk_markdown(content, source=filename)
         store.add_chunks(chunks)
         total_chunks += len(chunks)
-        print(f"  {filename} -> {len(chunks)} chunks")
+        print(f"  ✓ {filename} → {len(chunks)} chunks")
 
-    print(f"\nIngestion complete")
+    print(f"\n✅ Ingestion complete")
     print(f"   Documents: {store.document_count()}")
     print(f"   Total chunks: {store.chunk_count()}")
 

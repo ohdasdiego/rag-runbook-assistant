@@ -1,8 +1,8 @@
 # Runbook: On-Call Shift Handoff Procedure
 
-**Service:** On-Call Assistant (port 5005), All ADOStack services  
-**Severity:** P3 (routine) / P2 if open incidents exist  
-**Alert source:** Scheduled shift transition  
+**Service:** On-Call Assistant (port 5005), All ADOStack services 
+**Severity:** P3 (routine) / P2 if open incidents exist 
+**Alert source:** Scheduled shift transition 
 **Response time:** Complete handoff within 15 minutes of shift start
 
 ---
@@ -11,9 +11,9 @@
 
 A clean shift handoff ensures the incoming engineer has full situational awareness of claw-gateway1, the Civo k3s cluster, and all 6 ADOStack services. This runbook defines the pre-handoff checklist, handoff note generation, Telegram format, access verification, and post-handoff confirmation. Skipping steps leads to blind spots and delayed incident response.
 
-**On-Call Assistant:** https://oncall.ado-runner.com  
-**On-Call DB:** `/home/claw/Projects/oncall-assistant/data/oncall.db`  
-**Outgoing engineer:** completes checklist and generates notes  
+**On-Call Assistant:** https://oncall.ado-runner.com 
+**On-Call DB:** `/home/claw/Projects/oncall-assistant/data/oncall.db` 
+**Outgoing engineer:** completes checklist and generates notes 
 **Incoming engineer:** verifies access and confirms receipt
 
 ---
@@ -43,10 +43,10 @@ curl -s "https://oncall.ado-runner.com/api/incidents?status=INVESTIGATING" | pyt
 
 # SQLite direct query for full view
 sqlite3 /home/claw/Projects/oncall-assistant/data/oncall.db \
-  "SELECT id, title, severity, status, created_at FROM incidents WHERE status != 'RESOLVED' ORDER BY created_at DESC;"
+ "SELECT id, title, severity, status, created_at FROM incidents WHERE status != 'RESOLVED' ORDER BY created_at DESC;"
 ```
 
-**Criteria for YELLOW handoff:** Any incident in MITIGATED state  
+**Criteria for YELLOW handoff:** Any incident in MITIGATED state 
 **Criteria for RED handoff:** Any incident in OPEN or INVESTIGATING — do not hand off until MITIGATED at minimum
 
 ### 2. AI Infra Monitor Status
@@ -90,9 +90,9 @@ Expected state: all non-demo pods Running, node Ready, no unexpected Warnings.
 ```bash
 # Internal health check
 for port in 5000 5001 5002 5003 5004 5005; do
-  echo -n "Port $port: "
-  STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost:$port/api/status)
-  echo "$STATUS"
+ echo -n "Port $port: "
+ STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://localhost:$port/api/status)
+ echo "$STATUS"
 done
 
 # Systemd service states
@@ -100,9 +100,9 @@ systemctl is-active ai-infra-monitor ai-incident-logger rag-runbook-assistant k8
 
 # Public URL check
 for url in monitor incidents runbooks k8s orchestrator oncall; do
-  echo -n "https://$url.ado-runner.com: "
-  curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://$url.ado-runner.com/api/status
-  echo
+ echo -n "https://$url.ado-runner.com: "
+ curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://$url.ado-runner.com/api/status
+ echo
 done
 ```
 
@@ -113,7 +113,7 @@ Any non-200 response must be explained in the handoff note.
 ```bash
 curl -s https://incidents.ado-runner.com/api/incidents?limit=10 | python3 -m json.tool
 sqlite3 /home/claw/Projects/oncall-assistant/data/oncall.db \
-  "SELECT title, severity, status, created_at FROM incidents WHERE created_at > datetime('now', '-4 hours') ORDER BY created_at DESC;"
+ "SELECT title, severity, status, created_at FROM incidents WHERE created_at > datetime('now', '-4 hours') ORDER BY created_at DESC;"
 ```
 
 ---
@@ -141,17 +141,17 @@ curl -s https://oncall.ado-runner.com/api/incidents | python3 -m json.tool | hea
 Send this message to the shared ops Telegram chat after completing all checks:
 
 ```
-🔄 SHIFT HANDOFF — [DATE TIME UTC]
+ SHIFT HANDOFF — [DATE TIME UTC]
 
-👤 Outgoing: [Name]
-👤 Incoming: [Name]
+ Outgoing: [Name]
+ Incoming: [Name]
 
-📊 System Status:
+ System Status:
 • CPU: XX% [GREEN/YELLOW/RED]
 • MEM: XX% [GREEN/YELLOW/RED]
 • DISK: XX% [GREEN/YELLOW/RED]
 
-🛠 ADOStack Services: [ALL GREEN / X services degraded]
+ ADOStack Services: [ALL GREEN / X services degraded]
 • monitor.ado-runner.com: [200/5xx]
 • incidents.ado-runner.com: [200/5xx]
 • runbooks.ado-runner.com: [200/5xx]
@@ -159,14 +159,14 @@ Send this message to the shared ops Telegram chat after completing all checks:
 • orchestrator.ado-runner.com: [200/5xx]
 • oncall.ado-runner.com: [200/5xx]
 
-☸️ K8s Cluster: [NODE READY / issues]
+ K8s Cluster: [NODE READY / issues]
 
-📋 Open Incidents: [None / list with IDs]
+ Open Incidents: [None / list with IDs]
 
-🔑 Watch items for incoming shift:
+ Watch items for incoming shift:
 • [Any known issues, pending actions, or things to monitor]
 
-✅ Handoff complete. Incoming engineer please confirm receipt.
+ Handoff complete. Incoming engineer please confirm receipt.
 ```
 
 ---
@@ -191,7 +191,7 @@ kubectl get nodes
 curl -s https://monitor.ado-runner.com/api/metrics | python3 -m json.tool | grep -E "cpu_percent|mem_percent|disk_percent"
 ```
 
-Reply to the handoff Telegram message: `✅ Access confirmed. Taking over. [Name]`
+Reply to the handoff Telegram message: ` Access confirmed. Taking over. [Name]`
 
 ---
 
@@ -217,11 +217,11 @@ If handoff is blocked by an active P1 incident:
 - Outgoing engineer stays on until stabilized
 - Both engineers work in parallel if needed during stabilization
 - Document the extended overlap in the incident notes:
-  ```bash
-  curl -s -X POST https://oncall.ado-runner.com/api/incidents/<ID>/status \
-    -H "Content-Type: application/json" \
-    -d '{"status": "INVESTIGATING", "note": "Handoff blocked — both engineers on call during P1 stabilization"}'
-  ```
+ ```bash
+ curl -s -X POST https://oncall.ado-runner.com/api/incidents/<ID>/status \
+ -H "Content-Type: application/json" \
+ -d '{"status": "INVESTIGATING", "note": "Handoff blocked — both engineers on call during P1 stabilization"}'
+ ```
 
 ---
 
@@ -230,7 +230,7 @@ If handoff is blocked by an active P1 incident:
 ```bash
 # At end of shift: full incident summary for daily ops log
 sqlite3 /home/claw/Projects/oncall-assistant/data/oncall.db \
-  "SELECT id, title, severity, status, created_at, updated_at FROM incidents WHERE date(created_at) = date('now') ORDER BY created_at;"
+ "SELECT id, title, severity, status, created_at, updated_at FROM incidents WHERE date(created_at) = date('now') ORDER BY created_at;"
 
 # Update memory/YYYY-MM-DD.md with shift summary and any lessons learned
 ```
